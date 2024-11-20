@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:wheather_app/additional_info_item.dart';
 import 'package:wheather_app/hourly_forcast_item.dart';
 import 'package:http/http.dart' as http;
@@ -14,10 +15,12 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
+  late Future<Map<String, dynamic>> weather;
+
   @override
   void initState() {
     super.initState();
-    getCurrentWeather();
+    weather = getCurrentWeather();
   }
 
   Future<Map<String, dynamic>> getCurrentWeather() async {
@@ -49,13 +52,13 @@ class _WeatherScreenState extends State<WeatherScreen> {
         actions: [
           IconButton(
               onPressed: () {
-                print("Clicked");
+                setState(() {});
               },
               icon: const Icon(Icons.refresh))
         ],
       ),
       body: FutureBuilder(
-        future: getCurrentWeather(),
+        future: weather,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator.adaptive());
@@ -131,38 +134,48 @@ class _WeatherScreenState extends State<WeatherScreen> {
                   height: 16,
                 ),
                 // Forcase Card
-                const SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      HourlyForcastItem(
-                        time: "3:00",
-                        icon: Icons.cloud,
-                        temperature: "301.22",
-                      ),
-                      HourlyForcastItem(
-                        time: "4:00",
-                        icon: Icons.sunny,
-                        temperature: "315.22",
-                      ),
-                      HourlyForcastItem(
-                        time: "5:00",
-                        icon: Icons.cloud,
-                        temperature: "301.22",
-                      ),
-                      HourlyForcastItem(
-                        time: "6:00",
-                        icon: Icons.sunny,
-                        temperature: "312.22",
-                      ),
-                      HourlyForcastItem(
-                        time: "7:00",
-                        icon: Icons.cloud,
-                        temperature: "304.22",
-                      )
-                    ],
+                // SingleChildScrollView(
+                //   scrollDirection: Axis.horizontal,
+                //   child: Row(
+                //     children: [
+                //       for (int i = 1; i <= 5; i++)
+                //         HourlyForcastItem(
+                //           time: data['list'][i]['dt_txt'],
+                //           icon: data['list'][i]['weather'][0]['main'] ==
+                //                       "Clouds" ||
+                //                   data['list'][i]['weather'][0]['main'] ==
+                //                       "rain"
+                //               ? Icons.cloud
+                //               : Icons.sunny,
+                //           temperature:
+                //               data['list'][i]['main']['temp'].toString(),
+                //         ),
+                //     ],
+                //   ),
+                // ),
+
+                SizedBox(
+                  height: 120,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 5,
+                    itemBuilder: (context, index) {
+                      final currentTime = data['list'][index]['dt_txt'];
+                      final time = DateTime.parse(currentTime);
+                      final currentSky =
+                          data['list'][index]['weather'][0]['main'];
+                      final currentTemp = data['list'][index]['main']['temp'];
+                      return HourlyForcastItem(
+                        time: DateFormat.j().format(time),
+                        icon: currentSky == "Clouds" || currentSky == "rain"
+                            ? Icons.cloud
+                            : Icons.sunny,
+                        temperature: currentTemp.toString(),
+                      );
+                    },
                   ),
                 ),
+
                 const SizedBox(
                   height: 16,
                 ),
